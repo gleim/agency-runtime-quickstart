@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "repl-nix-agentgarage-quickstart"
+version = "0.1.0"
+description = ""
+authors = ["Bill Gleim <bill@configsecret.com"]
+readme = "README.md"
+packages = [{include = "repl_nix_agentgarage_quickstart"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+discord-py = "^2.3.2"
+langchain = "^0.1.16"
+flask = "^3.0.2"
+waitress = "3.0.0"
+langgraph = "0.0.39"
+securedb = "2.0.2"
+cryptography = "42.0.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
