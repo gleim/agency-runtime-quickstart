@@ -7,7 +7,7 @@ from langchain.schema import (
 )
 from typing import List
 from langchain_community.callbacks import get_openai_callback
-from langchain_community.chat_models.openai import ChatOpenAI 
+from langchain_openai import ChatOpenAI 
 
 # Discord-LangGraph agent helper class, adapted in part from CAMEL
 class PlainGraphAgent:
@@ -32,18 +32,6 @@ class PlainGraphAgent:
     return self.stored_messages
 
   def track_spending(self, total_cost: float) -> bool:
-    self.db = securedb.Db("./usage/db/", "./usage/.key")
-    previous_running_total = 0.00
-    try:
-      previous_running_total = self.db.get(self.username)
-      if previous_running_total > 2.80:
-        return False
-    except Exception as e:
-      # we expect an Exception for new users
-      print(f"track_spending Exception {e} at user {self.username}")
-    self.db.write(self.username, previous_running_total + total_cost)
-    print(f"new cost: {total_cost}")
-    print(f"new running total: {self.db.get(self.username)}")
     return True
 
   async def ainvoke(self, message: HumanMessage) -> AIMessage: 
