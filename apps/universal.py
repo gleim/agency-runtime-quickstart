@@ -1,6 +1,7 @@
+import json
 from typing import TypedDict, Annotated, Sequence, operator
 from langgraph.pregel import GraphRecursionError
-from langchain_community.chat_models.openai import ChatOpenAI 
+from langchain_openai import ChatOpenAI 
 from langchain.schema import (
   HumanMessage,
   BaseMessage,
@@ -12,13 +13,47 @@ from core.agent import PlainGraphAgent
 class AgentState(TypedDict):
   messages: Annotated[Sequence[BaseMessage], operator.add]
 
+agent_team_json = """{
+    "team-id": "quickquick",
+    "nodes": [
+        {
+            "name": "inceptor",
+            "prompt": "This is your role assignment: take a brief phrase from a user and incept an achievable, detailed variant as a task specification. Make the task achievable within four hundred words. Do not let your response exceed five hundred characters. The brief phrase from the user is: {}"
+        },
+        {
+            "name": "responder",
+            "prompt": "This is your role assignment: take a specified task and accomplish it. You may break the specified task into sub-parts for reasoning and planning purposes. Never repeat text. Your sole responsibility is to provide task completion in less than fifteen hundred characters.  The specified task is {}"
+        },
+        {
+            "name": "assessor",
+            "prompt": "This is your role assignment: receive a task completion proposal and compare it against the original task request for acceptance test evaluation. Provide the criteria and reasoning during the evaluation process. If and only if the task is correctly and completely addressed by the task completion proposal, end the explanation with the keyword DELIVERED. Do not repeat text. If given a numbered list, do not ever provide a numbered list in response. Your sole responsibility is to evaluate the task completion proposal {}. The original task request is {}. If the proposal does not satisfy the request, explain how the proposal is insufficient and must be modified. Do not let the response exceed fifteen hundred characters."
+        }
+    ],
+    "edges": [
+        {
+            "from": "inceptor",
+            "to": "responder"
+        },
+        {
+            "from": "responder",
+            "to": "assessor"
+        }
+    ],
+    "conditional-edges": {
+        "from": "assessor",
+        "conditional": "should_end",
+        "true": "END",
+        "false": "inceptor"
+    },
+    "halt-set": [
+        "DELIVERED"
+    ]
+}"""
+  
 # Define the role names
 inceptor_agent_name = "**\nTask Inception\n**\n"
 retriever_agent_name = "**\nTask Guidance\n**\n"
 responder_agent_name = "**\nGuidance Assessment\n**\n"
-
-# Define the halt phrase set
-halt_set = ["DELIVERED"]
 
 # Define the prompts
 inceptor_prompt = (
@@ -65,11 +100,11 @@ def should_end(state):
   message = messages[-1]
   content = message.content
   # flow halting case
-  if any(halt_str in content for halt_str in halt_set):
-    return "end"
+  if any(halt_str in content for halt_str in agent_team['halt-set']):
+    return "true"
   # default flow continuation case
   else:
-    return "continue"
+    return "false"
 
 # Define the agent step method
 async def inception_step(state):
@@ -94,7 +129,7 @@ async def response_step(state):
   return {"messages": [response_msg]}
 
 # Define the operational flow of the agent graph
-def define_graph():
+def define_graph(agent_team):
   # define workflow as state graph with stored agent state
   workflow = StateGraph(AgentState)
   # define the actions and transition functions of graph
@@ -108,8 +143,8 @@ def define_graph():
     # next state decision (transition function)
     should_end,
     {
-      "continue": "inceptor",
-      "end": END
+      "false": "inceptor",
+      "true": END
     }
   )
   workflow.set_entry_point("inceptor")
@@ -118,17 +153,27 @@ def define_graph():
   
 # Start the operational flow of the agent graph
 async def instigate_agent_flow(interaction, input):
-  # define the graph action states and conditional logic
-  runnable = define_graph()
-
   # define the communication channel for this interaction
   global channel
   channel = interaction.channel
 
-  # initialize active graph components
-  initialize_agents(interaction)
-
+  global agent_team
   try:
-    await runnable.ainvoke({"messages": [HumanMessage(content=input)], "original_task": input})  
-  except GraphRecursionError as e:
-    print(f"exception {e}")
+    agent_team = json.loads(agent_team_json)
+
+    # define the graph action states and conditional logic
+    runnable = define_graph(agent_team)
+
+    # initialize active graph components
+    initialize_agents(interaction)
+
+    try:
+      await runnable.ainvoke({"messages": [HumanMessage(content=input)], "original_task": input})  
+    except GraphRecursionError as e:
+      print(f"exception {e}")
+
+  except json.JSONDecodeError:
+    # invalid Agent specification
+    print("Invalid Agent specification [JSON]")
+    channel.send("Invalid Agent specification [JSON]")
+
