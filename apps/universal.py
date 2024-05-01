@@ -13,37 +13,42 @@ from core.agent import PlainGraphAgent
 class AgentState(TypedDict):
   messages: Annotated[Sequence[BaseMessage], operator.add]
 
+agents = []
+
 agent_team_json = """{
     "team-id": "quickquick",
     "nodes": [
         {
-            "name": "inceptor",
+            "name": "**Task Inception**",
+            "index": 0,
             "prompt": "This is your role assignment: take a brief phrase from a user and incept an achievable, detailed variant as a task specification. Make the task achievable within four hundred words. Do not let your response exceed five hundred characters. The brief phrase from the user is: {}"
         },
         {
-            "name": "responder",
+            "name": "**Task Guidance**",
+            "index": 1,
             "prompt": "This is your role assignment: take a specified task and accomplish it. You may break the specified task into sub-parts for reasoning and planning purposes. Never repeat text. Your sole responsibility is to provide task completion in less than fifteen hundred characters.  The specified task is {}"
         },
         {
-            "name": "assessor",
+            "name": "**Guidance Assessment**",
+            "index": 2,
             "prompt": "This is your role assignment: receive a task completion proposal and compare it against the original task request for acceptance test evaluation. Provide the criteria and reasoning during the evaluation process. If and only if the task is correctly and completely addressed by the task completion proposal, end the explanation with the keyword DELIVERED. Do not repeat text. If given a numbered list, do not ever provide a numbered list in response. Your sole responsibility is to evaluate the task completion proposal {}. The original task request is {}. If the proposal does not satisfy the request, explain how the proposal is insufficient and must be modified. Do not let the response exceed fifteen hundred characters."
         }
     ],
     "edges": [
         {
-            "from": "inceptor",
-            "to": "responder"
+            "from": "**Task Inception**",
+            "to": "**Task Guidance**"
         },
         {
-            "from": "responder",
-            "to": "assessor"
+            "from": "**Task Guidance**",
+            "to": "**Guidance Assessment**"
         }
     ],
     "conditional-edges": {
-        "from": "assessor",
+        "from": "**Guidance Assessment**",
         "conditional": "should_end",
         "true": "END",
-        "false": "inceptor"
+        "false": "**Task Inception**"
     },
     "halt-set": [
         "DELIVERED"
@@ -52,32 +57,16 @@ agent_team_json = """{
 
 # Define the set of agents
 def initialize_agents(interaction):
-  global inceptor_agent
-  inceptor_agent = PlainGraphAgent(
-    interaction,
-    ChatOpenAI(
-      temperature=0.6,
+  for index in range(len(agent_team['nodes'])):
+    agent = PlainGraphAgent(
+      interaction,
+      ChatOpenAI(
+        temperature=0.6,
+      )
     )
-  )
-  inceptor_agent.reset()
-
-  global retriever_agent
-  retriever_agent = PlainGraphAgent(
-    interaction,
-    ChatOpenAI(
-      temperature=0.6,
-    )
-  )
-  retriever_agent.reset()
-
-  global responder_agent
-  responder_agent = PlainGraphAgent(
-    interaction,
-    ChatOpenAI(
-      temperature=0.6,
-    )
-  )
-  responder_agent.reset()
+    agent.reset()
+    # add to global agent set
+    agents.append(agent)
 
 # Define conditional edge function 
 def should_end(state):
@@ -92,41 +81,46 @@ def should_end(state):
   else:
     return "false"
 
-# Define the agent step method
-async def inception_step(state):
-  inceptor_agent_name = agent_team['nodes'][0]['name']
-  inceptor_prompt = agent_team['nodes'][0]['prompt']
-  response = await inceptor_agent.ainvoke(HumanMessage(content=inceptor_prompt.format(state['messages'][-1].content)))
-  await channel.send(f"{inceptor_agent_name}{response.content[0:1970]}")
-  response_msg = HumanMessage(content=response.content)
-  return {"messages": [response_msg]}
+# Define the universal agent step action
+async def action_step(state):
+  # start with one message in the history and index zero
+  index = len(state['messages']) % len(agent_team['nodes']) - 1
+  
+  print(f"INDEX:{index}")
+  print(f"agent_team['nodes'][index]['index']:{str(agent_team['nodes'][index]['index'])}")
 
-# Define the agent step method
-async def retrieval_step(state):
-  retriever_agent_name = agent_team['nodes'][1]['name']
-  retrieval_prompt = agent_team['nodes'][1]['prompt']
-  response = await retriever_agent.ainvoke(HumanMessage(content=retrieval_prompt.format(state['messages'][-1].content)))
-  await channel.send(f"{retriever_agent_name}{response.content[0:1970]}")
-  response_msg = HumanMessage(content=response.content)
-  return {"messages": [response_msg]}
+  name = agent_team['nodes'][index]['name']
+  prompt = agent_team['nodes'][index]['prompt']
+  agent = agents[index]
 
-# Define the agent step method
-async def response_step(state):
-  responder_agent_name = agent_team['nodes'][2]['name']
-  response_prompt = agent_team['nodes'][2]['prompt']
-  response = await responder_agent.ainvoke(HumanMessage(content=response_prompt.format(state['messages'][-1].content, state['messages'][-2].content)))
-  await channel.send(f"{responder_agent_name}{response.content[0:1970]}")
-  response_msg = HumanMessage(content=response.content)
-  return {"messages": [response_msg]}
+  formatted_prompt = prompt
+  try:
+    if (prompt.count("{}")==1):
+      message = state['messages'][-1]
+      formatted_prompt = prompt.format(message.content)
+    elif (prompt.count("{}")==2):
+      task_guidance = state['messages'][-1]
+      task_specification = state['messages'][-2]
+      formatted_prompt = prompt.format(task_guidance.content, task_specification.content)
+  except IndexError as e:
+    # invalid Agent specification
+    print(f"Invalid index: {e}")
+  finally:
+    response = await agent.ainvoke(HumanMessage(content=formatted_prompt))
+    await channel.send(f"\n{name}\n{response.content[0:1970]}")
+    response_msg = HumanMessage(content=response.content)
+    return {"messages": [response_msg]}
 
 # Define the operational flow of the agent graph
-def define_graph(agent_team):
+  
+def define_graph():
   # define workflow as state graph with stored agent state
   workflow = StateGraph(AgentState)
+
   # define the actions and transition functions of graph
-  workflow.add_node("inceptor", inception_step)
-  workflow.add_node("retriever", retrieval_step)
-  workflow.add_node("responder", response_step)
+  workflow.add_node("inceptor", action_step)
+  workflow.add_node("retriever", action_step)
+  workflow.add_node("responder", action_step)
   workflow.add_edge("inceptor", "retriever")
   workflow.add_edge("retriever", "responder")
   workflow.add_conditional_edges(
@@ -153,7 +147,7 @@ async def instigate_agent_flow(interaction, input):
     agent_team = json.loads(agent_team_json)
 
     # define the graph action states and conditional logic
-    runnable = define_graph(agent_team)
+    runnable = define_graph()
 
     # initialize active graph components
     initialize_agents(interaction)
@@ -166,5 +160,5 @@ async def instigate_agent_flow(interaction, input):
   except json.JSONDecodeError:
     # invalid Agent specification
     print("Invalid Agent specification [JSON]")
-    channel.send("Invalid Agent specification [JSON]")
+    await channel.send("Invalid Agent specification [JSON]")
 
