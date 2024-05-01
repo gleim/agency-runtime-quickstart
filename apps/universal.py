@@ -49,20 +49,6 @@ agent_team_json = """{
         "DELIVERED"
     ]
 }"""
-  
-# Define the role names
-inceptor_agent_name = "**\nTask Inception\n**\n"
-retriever_agent_name = "**\nTask Guidance\n**\n"
-responder_agent_name = "**\nGuidance Assessment\n**\n"
-
-# Define the prompts
-inceptor_prompt = (
-  """This is your role assignment: take a brief phrase from a user and incept an achievable, detailed variant as a task specification. Make the task achievable within four hundred words. Do not let your response exceed five hundred characters. The brief phrase from the user is: {}"""
-)
-
-retrieval_prompt = """This is your role assignment: take a specified task and accomplish it. You may break the specified task into sub-parts for reasoning and planning purposes. Never repeat text. Your sole responsibility is to provide task completion in less than fifteen hundred characters.  The specified task is {}."""
-
-response_prompt = """This is your role assignment: receive a task completion proposal and compare it against the original task request for acceptance test evaluation. Provide the criteria and reasoning during the evaluation process. If and only if the task is correctly and completely addressed by the task completion proposal, end the explanation with the keyword DELIVERED. Do not repeat text. If given a numbered list, do not ever provide a numbered list in response. Your sole responsibility is to evaluate the task completion proposal {}. The original task request is {}. If the proposal does not satisfy the request, explain how the proposal is insufficient and must be modified. Do not let the response exceed fifteen hundred characters."""
 
 # Define the set of agents
 def initialize_agents(interaction):
@@ -108,6 +94,8 @@ def should_end(state):
 
 # Define the agent step method
 async def inception_step(state):
+  inceptor_agent_name = agent_team['nodes'][0]['name']
+  inceptor_prompt = agent_team['nodes'][0]['prompt']
   response = await inceptor_agent.ainvoke(HumanMessage(content=inceptor_prompt.format(state['messages'][-1].content)))
   await channel.send(f"{inceptor_agent_name}{response.content[0:1970]}")
   response_msg = HumanMessage(content=response.content)
@@ -115,6 +103,8 @@ async def inception_step(state):
 
 # Define the agent step method
 async def retrieval_step(state):
+  retriever_agent_name = agent_team['nodes'][1]['name']
+  retrieval_prompt = agent_team['nodes'][1]['prompt']
   response = await retriever_agent.ainvoke(HumanMessage(content=retrieval_prompt.format(state['messages'][-1].content)))
   await channel.send(f"{retriever_agent_name}{response.content[0:1970]}")
   response_msg = HumanMessage(content=response.content)
@@ -122,8 +112,9 @@ async def retrieval_step(state):
 
 # Define the agent step method
 async def response_step(state):
+  responder_agent_name = agent_team['nodes'][2]['name']
+  response_prompt = agent_team['nodes'][2]['prompt']
   response = await responder_agent.ainvoke(HumanMessage(content=response_prompt.format(state['messages'][-1].content, state['messages'][-2].content)))
-  
   await channel.send(f"{responder_agent_name}{response.content[0:1970]}")
   response_msg = HumanMessage(content=response.content)
   return {"messages": [response_msg]}
