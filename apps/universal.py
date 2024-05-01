@@ -84,7 +84,7 @@ def should_end(state):
 # Define the universal agent step action
 async def action_step(state):
   # start with one message in the history and index zero
-  index = len(state['messages']) % len(agent_team['nodes']) - 1
+  index = (len(state['messages'])-1) % len(agent_team['nodes'])
   
   print(f"INDEX:{index}")
   print(f"agent_team['nodes'][index]['index']:{str(agent_team['nodes'][index]['index'])}")
