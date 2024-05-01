@@ -1,6 +1,6 @@
 from typing import TypedDict, Annotated, Sequence, operator
 from langgraph.pregel import GraphRecursionError
-from langchain_community.chat_models.openai import ChatOpenAI 
+from langchain_community.chat_models.openai from langchain_openai import ChatOpenAI 
 from langchain.schema import (
   HumanMessage,
   BaseMessage,

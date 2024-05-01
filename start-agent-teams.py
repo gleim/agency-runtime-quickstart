@@ -6,7 +6,7 @@ from langchain.schema import (
   BaseMessage,
 )
 from web.server import keep_alive
-import apps.quickquick
+import apps.universal
 
 class AgentState(TypedDict):
   messages: Annotated[Sequence[BaseMessage], ...]
