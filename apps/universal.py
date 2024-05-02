@@ -22,37 +22,34 @@ agent_team_json = """{
     "team-id": "quickquick",
     "nodes": [
         {
-            "name": "**Task Inception**",
-            "index": 0,
+            "name": "Task Inception",
             "prompt": "This is your role assignment: take a brief phrase from a user and incept an achievable, detailed variant as a task specification. Make the task achievable within four hundred words. Do not let your response exceed five hundred characters. The brief phrase from the user is: {}"
         },
         {
-            "name": "**Task Guidance**",
-            "index": 1,
+            "name": "Task Guidance",
             "prompt": "This is your role assignment: take a specified task and accomplish it. You may break the specified task into sub-parts for reasoning and planning purposes. Never repeat text. Your sole responsibility is to provide task completion in less than fifteen hundred characters.  The specified task is {}"
         },
         {
-            "name": "**Guidance Assessment**",
-            "index": 2,
+            "name": "Guidance Assessment",
             "prompt": "This is your role assignment: receive a task completion proposal and compare it against the original task request for acceptance test evaluation. Provide the criteria and reasoning during the evaluation process. If and only if the task is correctly and completely addressed by the task completion proposal, end the explanation with the keyword DELIVERED. Do not repeat text. If given a numbered list, do not ever provide a numbered list in response. Your sole responsibility is to evaluate the task completion proposal {}. The original task request is {}. If the proposal does not satisfy the request, explain how the proposal is insufficient and must be modified. Do not let the response exceed fifteen hundred characters."
         }
     ],
     "edges": [
         {
-            "from": "**Task Inception**",
-            "to": "**Task Guidance**"
+            "from": "Task Inception",
+            "to": "Task Guidance"
         },
         {
-            "from": "**Task Guidance**",
-            "to": "**Guidance Assessment**"
+            "from": "Task Guidance",
+            "to": "Guidance Assessment"
         }
     ],
     "conditional-edges": [
         {
-            "from": "**Guidance Assessment**",
+            "from": "Guidance Assessment",
             "conditional": "should_end",
             "true": "END",
-            "false": "**Task Inception**"
+            "false": "Task Inception"
         }
     ],
     "halt-set": [
@@ -114,7 +111,7 @@ async def action_step(state):
     print(f"Invalid index: {e}")
   finally:
     response = await agent.ainvoke(HumanMessage(content=formatted_prompt))
-    await channel.send(f"\n{name}\n{response.content[0:1970]}\n")
+    await channel.send(f"**\n{name}\n**\n{response.content[0:1970]}")
     response_msg = HumanMessage(content=response.content)
     return {"messages": [response_msg]}
 
