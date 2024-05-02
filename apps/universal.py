@@ -6,12 +6,15 @@ from langchain.schema import (
   HumanMessage,
   BaseMessage,
 )
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph
 
 from core.agent import PlainGraphAgent
 
 class AgentState(TypedDict):
   messages: Annotated[Sequence[BaseMessage], operator.add]
+
+# explicit import for string invocation
+langgraph = __import__('langgraph')
 
 agents = []
 
@@ -44,12 +47,14 @@ agent_team_json = """{
             "to": "**Guidance Assessment**"
         }
     ],
-    "conditional-edges": {
-        "from": "**Guidance Assessment**",
-        "conditional": "should_end",
-        "true": "END",
-        "false": "**Task Inception**"
-    },
+    "conditional-edges": [
+        {
+            "from": "**Guidance Assessment**",
+            "conditional": "should_end",
+            "true": "END",
+            "false": "**Task Inception**"
+        }
+    ],
     "halt-set": [
         "DELIVERED"
     ]
@@ -81,23 +86,25 @@ def should_end(state):
   else:
     return "false"
 
-# Define the universal agent step action
+# Universal action graph with graph structure constraints
 async def action_step(state):
-  # start with one message in the history and index zero
-  index = (len(state['messages'])-1) % len(agent_team['nodes'])
+  # graph starts with single message in history and index zero
+  index = (len(state['messages'])-1) % len(agent_team['nodes'])  
   
-  print(f"INDEX:{index}")
-  print(f"agent_team['nodes'][index]['index']:{str(agent_team['nodes'][index]['index'])}")
-
+  # set graph variables that are dependent on graph index
   name = agent_team['nodes'][index]['name']
   prompt = agent_team['nodes'][index]['prompt']
   agent = agents[index]
-
+  
+  # initialize formatted prompt without formatting
   formatted_prompt = prompt
+  
   try:
+    # configure prompt dependent on previous message
     if (prompt.count("{}")==1):
       message = state['messages'][-1]
       formatted_prompt = prompt.format(message.content)
+    # configure prompt dependent on previous two messages
     elif (prompt.count("{}")==2):
       task_guidance = state['messages'][-1]
       task_specification = state['messages'][-2]
@@ -107,32 +114,35 @@ async def action_step(state):
     print(f"Invalid index: {e}")
   finally:
     response = await agent.ainvoke(HumanMessage(content=formatted_prompt))
-    await channel.send(f"\n{name}\n{response.content[0:1970]}")
+    await channel.send(f"\n{name}\n{response.content[0:1970]}\n")
     response_msg = HumanMessage(content=response.content)
     return {"messages": [response_msg]}
 
 # Define the operational flow of the agent graph
-  
-def define_graph():
+def define_graph():  
   # define workflow as state graph with stored agent state
   workflow = StateGraph(AgentState)
 
-  # define the actions and transition functions of graph
-  workflow.add_node("inceptor", action_step)
-  workflow.add_node("retriever", action_step)
-  workflow.add_node("responder", action_step)
-  workflow.add_edge("inceptor", "retriever")
-  workflow.add_edge("retriever", "responder")
-  workflow.add_conditional_edges(
-    "responder",
-    # next state decision (transition function)
-    should_end,
-    {
-      "false": "inceptor",
-      "true": END
-    }
-  )
-  workflow.set_entry_point("inceptor")
+  # define the start node of the graph
+  workflow.set_entry_point(agent_team['nodes'][0]['name'])
+  
+  # define the actions of graph
+  for node in agent_team['nodes']:
+    workflow.add_node(node['name'], action_step)    
+
+  # define the transition functions of graph
+  for edge in agent_team['edges']:
+    workflow.add_edge(edge['from'], edge['to'])
+
+  for edge in agent_team['conditional-edges']:
+    workflow.add_conditional_edges(
+      edge['from'],
+      globals()[edge['conditional']],
+      {
+        "false": edge['false'],
+        "true": getattr(langgraph.graph, edge['true'])
+      }
+    )
   runnable = workflow.compile()
   return runnable
   
@@ -161,4 +171,3 @@ async def instigate_agent_flow(interaction, input):
     # invalid Agent specification
     print("Invalid Agent specification [JSON]")
     await channel.send("Invalid Agent specification [JSON]")
-
