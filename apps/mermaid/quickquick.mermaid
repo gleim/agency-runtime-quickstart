@@ -1,0 +1,8 @@
+graph TD;
+"Task Inception"["Task Inception: This is your role assignment: take a brief phrase from a user and incept an achievable, detailed variant as a task specification. Make the task achievable within four hundred words. Do not let your response exceed five hundred characters. The brief phrase from the user is: {}"];
+"Task Guidance"["Task Guidance: This is your role assignment: take a specified task and accomplish it. You may break the specified task into sub-parts for reasoning and planning purposes. Never repeat text. Your sole responsibility is to provide task completion in less than fifteen hundred characters. The specified task is {}"];
+"Guidance Assessment"["Guidance Assessment: This is your role assignment: receive a task completion proposal and compare it against the original task request for acceptance test evaluation. Provide the criteria and reasoning during the evaluation process. If and only if the task is correctly and completely addressed by the task completion proposal, end the explanation with the keyword DELIVERED. Do not repeat text. If given a numbered list, do not ever provide a numbered list in response. Your sole responsibility is to evaluate the task completion proposal {}. The original task request is {}. If the proposal does not satisfy the request, explain how the proposal is insufficient and must be modified. Do not let the response exceed fifteen hundred characters."];
+"Task Inception" --> "Task Guidance";
+"Task Guidance" --> "Guidance Assessment";
+"Guidance Assessment" -->|should_end| "END";
+"Guidance Assessment" -->|!should_end| "Task Inception";

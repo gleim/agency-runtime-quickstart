@@ -38,7 +38,20 @@ async def quicki_box(ctx, input:str):
     await apps.universal.instigate_agent_flow(ctx, input)
   else:
     await ctx.response.send_message("Try the *quickquick* agents on the #agent-test-track!")
-    
+
+@tree.command(
+  name="agents",
+  description="specify a team and get a quick response",
+  guild=discord.Object(id=guild_id)
+)
+async def json_box(ctx, json:str, input:str):
+  # restrict messaging by channel
+  if ctx.channel.name == 'agent-test-track':
+    await ctx.response.send_message(f"Starting custom JSON team for \n**\nUser-Specified Agent JSON\n**\n{input}")
+    await apps.universal.instigate_json_flow(ctx, json, input)
+  else:
+    await ctx.response.send_message("Try the *json-agents* on the #agent-test-track!")
+
 # Spin up server
 keep_alive()
 my_secret = os.environ['AGENTBOT_SECRET']

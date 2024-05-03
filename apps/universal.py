@@ -12,7 +12,7 @@ from core.agent import PlainGraphAgent
 
 class AgentState(TypedDict):
   messages: Annotated[Sequence[BaseMessage], operator.add]
-
+  
 # explicit import for string invocation
 langgraph = __import__('langgraph')
 
@@ -114,7 +114,7 @@ async def action_step(state):
     await channel.send(f"**\n{name}\n**\n{response.content[0:1970]}")
     response_msg = HumanMessage(content=response.content)
     return {"messages": [response_msg]}
-
+    
 # Define the operational flow of the agent graph
 def define_graph():  
   # define workflow as state graph with stored agent state
@@ -160,7 +160,7 @@ async def instigate_agent_flow(interaction, input):
     initialize_agents(interaction)
 
     try:
-      await runnable.ainvoke({"messages": [HumanMessage(content=input)], "original_task": input})  
+      await runnable.ainvoke({"messages": [HumanMessage(content=input)]})  
     except GraphRecursionError as e:
       print(f"exception {e}")
 
@@ -168,3 +168,30 @@ async def instigate_agent_flow(interaction, input):
     # invalid Agent specification
     print("Invalid Agent specification [JSON]")
     await channel.send("Invalid Agent specification [JSON]")
+
+# Start the operational flow of the agent graph
+async def instigate_json_flow(interaction, agentspec, input):
+  # define the communication channel for this interaction
+  global channel
+  channel = interaction.channel
+
+  global agent_team
+  try:
+    agent_team = json.loads(agentspec)
+
+    # define the graph action states and conditional logic
+    runnable = define_graph()
+
+    # initialize active graph components
+    initialize_agents(interaction)
+
+    try:
+      await runnable.ainvoke({"messages": [HumanMessage(content=input)]})  
+    except GraphRecursionError as e:
+      print(f"exception {e}")
+
+  except json.JSONDecodeError:
+    # invalid Agent specification
+    print("Invalid Agent specification [JSON]")
+    await channel.send("Invalid Agent specification [JSON], please try again")
+    

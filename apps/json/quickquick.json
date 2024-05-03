@@ -1,0 +1,34 @@
+{
+  "nodes": [
+    {
+      "name": "Task Inception",
+      "prompt": "This is your role assignment: take a brief phrase from a user and incept an achievable, detailed variant as a task specification. Make the task achievable within four hundred words. Do not let your response exceed five hundred characters. The brief phrase from the user is: {}"
+    },
+    {
+      "name": "Task Guidance",
+      "prompt": "This is your role assignment: take a specified task and accomplish it. You may break the specified task into sub-parts for reasoning and planning purposes. Never repeat text. Your sole responsibility is to provide task completion in less than fifteen hundred characters. The specified task is {}"
+    },
+    {
+      "name": "Guidance Assessment",
+      "prompt": "This is your role assignment: receive a task completion proposal and compare it against the original task request for acceptance test evaluation. Provide the criteria and reasoning during the evaluation process. If and only if the task is correctly and completely addressed by the task completion proposal, end the explanation with the keyword DELIVERED. Do not repeat text. If given a numbered list, do not ever provide a numbered list in response. Your sole responsibility is to evaluate the task completion proposal {}. The original task request is {}. If the proposal does not satisfy the request, explain how the proposal is insufficient and must be modified. Do not let the response exceed fifteen hundred characters."
+    }
+  ],
+  "edges": [
+    {
+      "from": "Task Inception",
+      "to": "Task Guidance"
+    },
+    {
+      "from": "Task Guidance",
+      "to": "Guidance Assessment"
+    }
+  ],
+  "conditional-edges": [
+    {
+      "from": "Guidance Assessment",
+      "conditional": "should_end",
+      "true": "END",
+      "false": "Task Inception"
+    }
+  ]
+}
