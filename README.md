@@ -1,4 +1,4 @@
-# agencyruntime-quickstart
+# agency-runtime-quickstart
 Quickstart for creating agent teams in the Agency Runtime stack
 
 # Replit hosting configuration
