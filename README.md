@@ -1,5 +1,6 @@
 # agency-runtime-quickstart
-Quickstart for creating agent teams in the Agency Runtime stack
+Quickstart for self-hosting and customizing agent teams on the 
+Agency Runtime OSS stack.
 
 # Replit hosting configuration
 These are the instructions for using the Replit component of
