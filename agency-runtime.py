@@ -6,7 +6,7 @@ from agentgarage import quickquick
 
 # main process
 apikey = os.environ['OPENAI_API_KEY'] ,
-guild_id = os.environ['GUILD_ID']
+guild_id = os.environ['AGENCY_GUILD_ID']
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents = intents)
@@ -30,22 +30,22 @@ async def quicki_box(ctx, input:str):
     await ctx.response.send_message(f"Starting quick response team with \n**\nUser-Specified Input\n**\n{input}")
     await quickquick.instigate_agent_flow(ctx, input)
   else:
-    await ctx.response.send_message("Try the *quickquick* agents on the #agent-test-track!")
+    await ctx.response.send_message("Try the *quickquick* command on #agent-teams!")
 
 @tree.command(
   name="agency-run",
-  description="specify a team and get a quick response",
+  description="make a team for a quick response",
   guild=discord.Object(id=guild_id)
 )
 async def runtime_box(ctx, json:str, input:str):
   # restrict messaging by channel
   if ctx.channel.name == 'agent-teams':
-    await ctx.response.send_message(f"Starting custom JSON team for \n**\nUser-Specified Agent JSON\n**\n{input}")
+    await ctx.response.send_message(f"Starting custom JSON team for \n**\nUser-Specified Agent Input\n**\n{input}")
     await quickquick.instigate_runtime_flow(ctx, json, input)
   else:
-    await ctx.response.send_message("Try *agency-run* on #agent-teams!")
+    await ctx.response.send_message("Set up your agents with *agency-run* on #agent-teams!")
 
 # Spin up server
 keep_alive()
-my_secret = os.environ['GARAGEBOT_SECRET']
+my_secret = os.environ['AGENCYBOT_SECRET']
 client.run(my_secret)
