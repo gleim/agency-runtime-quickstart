@@ -27,7 +27,7 @@ agent_team_json = """{
         },
         {
             "name": "Task Guidance",
-            "prompt": "This is your role assignment: take a specified task and accomplish it. You may break the specified task into sub-parts for reasoning and planning purposes. Never repeat text. Your sole responsibility is to provide task completion in less than fifteen hundred characters.  The specified task is {}"
+            "prompt": "This is your role assignment: take a specified task and provide detailed guidance to accomplish it. You may break the specified task into sub-parts for reasoning and planning purposes. Never repeat text. Do not repeat parts of the task you are provided. Your sole responsibility is to provide guidance to task completion in less than fifteen hundred characters.  The specified task is {}"
         },
         {
             "name": "Guidance Assessment",
