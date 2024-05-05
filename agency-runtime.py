@@ -24,28 +24,42 @@ async def on_ready():
   description="enter a quick phrase for a quick team response",
   guild=discord.Object(id=guild_id)
 )
-async def quicki_box(ctx, input:str):
+async def quicki_box(ctx, phrase:str):
   # restrict messaging by channel
   if ctx.channel.name == 'agent-teams':
-    await ctx.response.send_message(f"Starting quick response team with \n**\nUser-Specified Input\n**\n{input}")
-    await quickquick.instigate_agent_flow(ctx, input)
+    await ctx.response.send_message(f"Starting quick response team with \n**\nUser-Specified Input\n**\n{phrase}")
+    await quickquick.instigate_agent_flow(ctx, phrase)
   else:
     await ctx.response.send_message("Try the *quickquick* command on #agent-teams!")
 
 @tree.command(
-  name="agency-run",
-  description="make a team for a quick response",
+  name="quickteam",
+  description="custom agent team to provide your rapid response",
   guild=discord.Object(id=guild_id)
 )
-async def runtime_box(ctx, json:str, input:str):
+async def json_box(ctx, phrase:str, team_json:str):
   # restrict messaging by channel
   if ctx.channel.name == 'agent-teams':
-    await ctx.response.send_message(f"Starting custom JSON team for \n**\nUser-Specified Agent Input\n**\n{input}")
-    await quickquick.instigate_runtime_flow(ctx, json, input)
+    await ctx.response.send_message(f"Starting custom JSON team for \n**\nUser-Specified Agent Input\n**\n{phrase}")
+    await quickquick.instigate_runtime_flow(ctx, team_json, phrase)
   else:
-    await ctx.response.send_message("Set up your agents with *agency-run* on #agent-teams!")
+    await ctx.response.send_message("Set up your agent team with *quickteam* on #agent-teams!")
+
+@tree.command(
+  name="quickmermaid",
+  description="custom agent team to provide your rapid response",
+  guild=discord.Object(id=guild_id)
+)
+async def mermaid_box(ctx, phrase:str, team_mermaid:str):
+  # restrict messaging by channel
+  if ctx.channel.name == 'agent-teams':
+    await ctx.response.send_message("Custom Mermaid team support coming soon.")
+    #await ctx.response.send_message(f"\n**\nUser-Specified Agent Input\n**\n{phrase}")
+    #await quickquick.instigate_runtime_flow(ctx, team_json, phrase)
+  else:
+    await ctx.response.send_message("Set up your agent team with *quickmermaid* on #agent-teams!")
 
 # Spin up server
 keep_alive()
-my_secret = os.environ['AGENCYBOT_SECRET']
+my_secret = os.environ['AGENCYBOT_TOKEN']
 client.run(my_secret)

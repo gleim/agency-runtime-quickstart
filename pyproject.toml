@@ -1,10 +1,9 @@
 [tool.poetry]
-name = "repl-nix-agentgarage-quickstart"
+name = "agency-runtime-quickstart"
 version = "0.1.0"
 description = ""
 authors = ["Bill Gleim <bill@configsecret.com"]
 readme = "README.md"
-packages = [{include = "repl_nix_agentgarage_quickstart"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
