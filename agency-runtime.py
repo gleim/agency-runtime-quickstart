@@ -7,6 +7,7 @@ from agentgarage import quickquick
 # main process
 apikey = os.environ['OPENAI_API_KEY'] ,
 guild_id = os.environ['AGENCY_GUILD_ID']
+app_token = os.environ['AGENCYBOT_TOKEN']
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents = intents)
@@ -34,7 +35,7 @@ async def quicki_box(ctx, phrase:str):
 
 @tree.command(
   name="quickteam",
-  description="custom agent team to provide your rapid response",
+  description="interact with your own custom agent team (JSON)",
   guild=discord.Object(id=guild_id)
 )
 async def json_box(ctx, phrase:str, team_json:str):
@@ -43,11 +44,11 @@ async def json_box(ctx, phrase:str, team_json:str):
     await ctx.response.send_message(f"Starting custom JSON team for \n**\nUser-Specified Agent Input\n**\n{phrase}")
     await quickquick.instigate_runtime_flow(ctx, team_json, phrase)
   else:
-    await ctx.response.send_message("Set up your agent team with *quickteam* on #agent-teams!")
+    await ctx.response.send_message("Start your agent team with *quickteam* on #agent-teams!")
 
 @tree.command(
   name="quickmermaid",
-  description="custom agent team to provide your rapid response",
+  description="interact with your own custom agent team (Mermaid)",
   guild=discord.Object(id=guild_id)
 )
 async def mermaid_box(ctx, phrase:str, team_mermaid:str):
@@ -57,9 +58,8 @@ async def mermaid_box(ctx, phrase:str, team_mermaid:str):
     #await ctx.response.send_message(f"\n**\nUser-Specified Agent Input\n**\n{phrase}")
     #await quickquick.instigate_runtime_flow(ctx, team_json, phrase)
   else:
-    await ctx.response.send_message("Set up your agent team with *quickmermaid* on #agent-teams!")
+    await ctx.response.send_message("Start your agent team with *quickmermaid* on #agent-teams!")
 
-# Spin up server
+# Start agent server
 keep_alive()
-my_secret = os.environ['AGENCYBOT_TOKEN']
-client.run(my_secret)
+client.run(app_token)
