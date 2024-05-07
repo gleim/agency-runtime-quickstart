@@ -30,5 +30,8 @@
       "true": "END",
       "false": "Task Inception"
     }
+  ],
+  "halt-set": [
+      "DELIVERED"
   ]
 }
