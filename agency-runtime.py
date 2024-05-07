@@ -46,20 +46,6 @@ async def json_box(ctx, phrase:str, team_json:str):
   else:
     await ctx.response.send_message("Start your agent team with *quickteam* on #agent-teams!")
 
-@tree.command(
-  name="quickmermaid",
-  description="interact with your own custom agent team (Mermaid)",
-  guild=discord.Object(id=guild_id)
-)
-async def mermaid_box(ctx, phrase:str, team_mermaid:str):
-  # restrict messaging by channel
-  if ctx.channel.name == 'agent-teams':
-    await ctx.response.send_message("Custom Mermaid team support coming soon.")
-    #await ctx.response.send_message(f"\n**\nUser-Specified Agent Input\n**\n{phrase}")
-    #await quickquick.instigate_runtime_flow(ctx, team_json, phrase)
-  else:
-    await ctx.response.send_message("Start your agent team with *quickmermaid* on #agent-teams!")
-
 # Start agent server
 keep_alive()
 client.run(app_token)
