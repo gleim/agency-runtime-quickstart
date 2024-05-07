@@ -1,0 +1,38 @@
+{
+    "team-id": "template",
+    "nodes": [
+        {
+            "name": "AgentOne",
+            "prompt": "Prompt One"
+        },
+        {
+            "name": "AgentTwo",
+            "prompt": "Prompt Two"
+        },
+        {
+            "name": "AgentThree",
+            "prompt": "Prompt Three"
+        }
+    ],
+    "edges": [
+        {
+            "from": "AgentOne",
+            "to": "AgentTwo"
+        },
+        {
+            "from": "AgentTwo",
+            "to": "AgentThree"
+        }
+    ],
+    "conditional-edges": [
+        {
+            "from": "AgentThree",
+            "conditional": "should_end",
+            "true": "END",
+            "false": "AgentOne"
+        }
+    ],
+    "halt-set": [
+        "DELIVERED"
+    ]
+}
