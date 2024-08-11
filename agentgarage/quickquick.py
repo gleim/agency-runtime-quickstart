@@ -19,7 +19,7 @@ langgraph = __import__('langgraph')
 agents = []
 
 agent_team_json = """{
-    "team-id": "quickquick",
+    "team_id": "quickquick",
     "nodes": [
         {
             "name": "Task Inception",
@@ -44,7 +44,7 @@ agent_team_json = """{
             "to": "Guidance Assessment"
         }
     ],
-    "conditional-edges": [
+    "conditional_edges": [
         {
             "from": "Guidance Assessment",
             "conditional": "should_end",
@@ -52,7 +52,7 @@ agent_team_json = """{
             "false": "Task Inception"
         }
     ],
-    "halt-set": [
+    "halt_set": [
         "DELIVERED"
     ]
 }"""
@@ -77,7 +77,7 @@ def should_end(state):
   message = messages[-1]
   content = message.content
   # flow halting case
-  if any(halt_str in content for halt_str in agent_team['halt-set']):
+  if any(halt_str in content for halt_str in agent_team['halt_set']):
     return "true"
   # default flow continuation case
   else:
@@ -131,7 +131,7 @@ def define_graph():
   for edge in agent_team['edges']:
     workflow.add_edge(edge['from'], edge['to'])
 
-  for edge in agent_team['conditional-edges']:
+  for edge in agent_team['conditional_edges']:
     workflow.add_conditional_edges(
       edge['from'],
       globals()[edge['conditional']],

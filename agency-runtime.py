@@ -27,14 +27,14 @@ async def on_ready():
               guild=discord.Object(id=guild_id))
 async def quicki_box(ctx, phrase: str):
   # restrict messaging by channel
-  if ctx.channel.name == 'agent-teams':
+  if ctx.channel.name == 'subscription-agents':
     await ctx.response.send_message(
         f"Starting quick response team with \n**\nUser-Specified Input\n**\n{phrase}"
     )
     await quickquick.instigate_agent_flow(ctx, phrase)
   else:
     await ctx.response.send_message(
-        "Try the *quickquick* command on #agent-teams!")
+        "Try the *quickquick* command on #subscription-agents!")
 
 
 @tree.command(name="quickteam",
@@ -42,14 +42,14 @@ async def quicki_box(ctx, phrase: str):
               guild=discord.Object(id=guild_id))
 async def json_box(ctx, phrase: str, team_json: str):
   # restrict messaging by channel
-  if ctx.channel.name == 'agent-teams':
+  if ctx.channel.name == 'subscription-agents':
     await ctx.response.send_message(
         f"Starting custom JSON team for \n**\nUser-Specified Agent Input\n**\n{phrase}"
     )
     await quickquick.instigate_runtime_flow(ctx, team_json, phrase)
   else:
     await ctx.response.send_message(
-        "Start your agent team with *quickteam* on #agent-teams!")
+        "Start your agent team with *quickteam* on #subscription-agents!")
 
 
 # Start agent server
