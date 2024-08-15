@@ -95,7 +95,9 @@ async def nifty_box(ctx, phrase: str):
     
     # extract opo agent from JSON, call instigate_runtime_flow
     Web3.HTTPProvider(f"https://sepolia.infura.io/v3/{infura_project_id}")
-
+    contract_address = '0x5FBB68B52B8017c5A56a5985d87Cb32cb5cb6538'
+    abi = Path('./contract/AgentFactory/abi.json').read_text()
+    
     db = SqliteDict("addr.sqlite", outer_stack=False)
     addr = db[ctx.user.id] 
     db.close()
