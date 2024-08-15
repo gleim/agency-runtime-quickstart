@@ -1,13 +1,16 @@
 import os
 import discord
+from sqlitedict import SqliteDict
 from discord import app_commands
 from web.server import keep_alive
 from agentgarage import quickquick
+from web3 import Web3
 
 # main process
 apikey = os.environ['OPENAI_API_KEY'],
 guild_id = os.environ['AGENCY_GUILD_ID']
 app_token = os.environ['AGENCYBOT_TOKEN']
+infura_project_id = os.environ['INFURA_PROJECT_ID']
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
@@ -23,25 +26,32 @@ async def on_ready():
 
 
 @tree.command(name="opo_locker",
-              description="create your locker own-your-own portable agent systems",
+              description="create your Opo locker",
               guild=discord.Object(id=guild_id))
 async def locker_box(ctx):
   # restrict messaging by channel
   if ctx.channel.name == 'opo-agents':
-    await ctx.response.send_message(
-        f"Create own-your-own portable agents at http://opo-creator.com"
+    await ctx.channel.reply(
+        f"Create own-your-own portable agents at http://opo-creator.replit.app/{ctx.author.id}"
     )
 
 
 @tree.command(name="opo_connect",
-              description="create your locker own-your-own portable agent systems",
+              description="connect your Opo locker",
               guild=discord.Object(id=guild_id))
 async def connect_box(ctx, addr: str):
   # restrict messaging by channel
-  if ctx.channel.name == 'opo-agents':
-    await ctx.response.send_message(
-      f"Adding locker address {addr}"
-    )  
+  if ctx.channel.name == 'mint-opo-agents':
+    await ctx.response.defer(ephemeral=True)
+    db = SqliteDict("addr.sqlite", outer_stack=False)
+    db[str(ctx.user.id)] = {"addr": addr}
+    db.commit()
+    db.close()
+
+    await ctx.channel.send(
+      "Locker added! Make your Opo agent and use with /opo"
+    )
+    await ctx.followup.send(f"User: {ctx.user.id}, Adding locker address {addr}")
 
 
 @tree.command(name="quickquick",
@@ -74,22 +84,34 @@ async def json_box(ctx, phrase: str, team_json: str):
         "Start your agent team with *quickteam* on #subscription-agents!")
 
 
-@tree.command(name="opo",
-              description="add a quick phrase, your agents provide nifty responses",
-              guild=discord.Object(id=guild_id))
+@tree.command(
+    name="opo",
+    description="add a quick phrase, your Opo agents provide nifty responses",
+    guild=discord.Object(id=guild_id))
 async def nifty_box(ctx, phrase: str):
   # restrict messaging by channel
-  if ctx.channel.name == 'opo-agents':
+  if ctx.channel.name == 'mint-opo-agents':
+    await ctx.response.defer(ephemeral=True)
+    
     # extract opo agent from JSON, call instigate_runtime_flow
+    Web3.HTTPProvider(f"https://sepolia.infura.io/v3/{infura_project_id}")
+
+    db = SqliteDict("addr.sqlite", outer_stack=False)
+    addr = db[ctx.user.id] 
+    db.close()
+
+    await ctx.channel.send(
+      "Locker added! Make your Opo agent and use with /opo"
+    )
+    await ctx.followup.send(
+        f"Addr: {addr}"
+    )
     
-    await ctx.response.send_message(
-      f"Initiating your opo agents with \n**\nUser-Specified Input\n**\n{phrase}"
-    )  
-    await quickquick.instigate_agent_flow(ctx, phrase)
+  #f"Initiating your opo agents with \n**\nUser-Specified Input\n**\n{phrase}"
+  #await quickquick.instigate_agent_flow(ctx, phrase)
   else:
-    await ctx.response.send_message(
-        "Try the *opo* command on #opo-agents!")
-    
+    await ctx.channel.send("Try the *opo* command on #opo-agents!")
+
 
 # Start agent server
 keep_alive()
