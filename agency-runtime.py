@@ -22,6 +22,28 @@ async def on_ready():
   print(client.user)
 
 
+@tree.command(name="opo_locker",
+              description="create your locker own-your-own portable agent systems",
+              guild=discord.Object(id=guild_id))
+async def locker_box(ctx):
+  # restrict messaging by channel
+  if ctx.channel.name == 'opo-agents':
+    await ctx.response.send_message(
+        f"Create own-your-own portable agents at http://opo-creator.com"
+    )
+
+
+@tree.command(name="opo_connect",
+              description="create your locker own-your-own portable agent systems",
+              guild=discord.Object(id=guild_id))
+async def connect_box(ctx, addr: str):
+  # restrict messaging by channel
+  if ctx.channel.name == 'opo-agents':
+    await ctx.response.send_message(
+      f"Adding locker address {addr}"
+    )  
+
+
 @tree.command(name="quickquick",
               description="enter a quick phrase for a quick team response",
               guild=discord.Object(id=guild_id))
@@ -51,6 +73,23 @@ async def json_box(ctx, phrase: str, team_json: str):
     await ctx.response.send_message(
         "Start your agent team with *quickteam* on #subscription-agents!")
 
+
+@tree.command(name="opo",
+              description="add a quick phrase, your agents provide nifty responses",
+              guild=discord.Object(id=guild_id))
+async def nifty_box(ctx, phrase: str):
+  # restrict messaging by channel
+  if ctx.channel.name == 'opo-agents':
+    # extract opo agent from JSON, call instigate_runtime_flow
+    
+    await ctx.response.send_message(
+      f"Initiating your opo agents with \n**\nUser-Specified Input\n**\n{phrase}"
+    )  
+    await quickquick.instigate_agent_flow(ctx, phrase)
+  else:
+    await ctx.response.send_message(
+        "Try the *opo* command on #opo-agents!")
+    
 
 # Start agent server
 keep_alive()
