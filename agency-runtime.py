@@ -1,5 +1,7 @@
 import os
 import discord
+import json
+from pathlib import Path
 from sqlitedict import SqliteDict
 from discord import app_commands
 from web.server import keep_alive
@@ -94,19 +96,51 @@ async def nifty_box(ctx, phrase: str):
     await ctx.response.defer(ephemeral=True)
     
     # extract opo agent from JSON, call instigate_runtime_flow
-    Web3.HTTPProvider(f"https://sepolia.infura.io/v3/{infura_project_id}")
-    contract_address = '0x5FBB68B52B8017c5A56a5985d87Cb32cb5cb6538'
+    w3_provider= Web3.HTTPProvider(f"https://sepolia.infura.io/v3/{infura_project_id}")
+    agent_factory = '0x5FBB68B52B8017c5A56a5985d87Cb32cb5cb6538'
     abi = Path('./contract/AgentFactory/abi.json').read_text()
+    w3 = Web3(w3_provider)   
+    contract_instance = w3.eth.contract(address=agent_factory, abi=abi)
     
+    # determine which token ID(s) are owned by address
+
+    # extract URI from token
+    tokenURI = contract_instance.functions.tokenURI(3).call()
+    # JSON string with surrounding double quotes
+
+    # Remove the surrounding double quotes
+    if tokenURI.startswith('"') and tokenURI.endswith('"'):
+      tokenURI = tokenURI[1:-1]
+
+    try:
+        # Parse the JSON string
+        data = json.loads(tokenURI)
+
+        # Extract the opo field
+        opo_field = data['opo']
+
+        # Convert the opo field back to a JSON string
+        opo_json = json.dumps(opo_field[0], indent=2)
+
+        print(opo_json)
+
+        await quickquick.instigate_runtime_flow(ctx, opo_json, phrase)
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+    except KeyError as e:
+        print(f"Key error: {e}")
+
+    # retrieve local copy of address for this Discord user
     db = SqliteDict("addr.sqlite", outer_stack=False)
-    addr = db[ctx.user.id] 
+    addr = db[str(ctx.user.id)] 
     db.close()
 
     await ctx.channel.send(
       "Locker added! Make your Opo agent and use with /opo"
     )
+    
     await ctx.followup.send(
-        f"Addr: {addr}"
+        f"addr : {addr}"
     )
     
   #f"Initiating your opo agents with \n**\nUser-Specified Input\n**\n{phrase}"
