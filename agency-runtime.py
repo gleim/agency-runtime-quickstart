@@ -1,6 +1,7 @@
 import os
 import discord
 import json
+import requests 
 from pathlib import Path
 from sqlitedict import SqliteDict
 from discord import app_commands
@@ -101,46 +102,55 @@ async def nifty_box(ctx, phrase: str):
     abi = Path('./contract/AgentFactory/abi.json').read_text()
     w3 = Web3(w3_provider)   
     contract_instance = w3.eth.contract(address=agent_factory, abi=abi)
-    
-    # determine which token ID(s) are owned by address
-
-    # extract URI from token
-    tokenURI = contract_instance.functions.tokenURI(3).call()
-    # JSON string with surrounding double quotes
-
-    # Remove the surrounding double quotes
-    if tokenURI.startswith('"') and tokenURI.endswith('"'):
-      tokenURI = tokenURI[1:-1]
-
-    try:
-        # Parse the JSON string
-        data = json.loads(tokenURI)
-
-        # Extract the opo field
-        opo_field = data['opo']
-
-        # Convert the opo field back to a JSON string
-        opo_json = json.dumps(opo_field[0], indent=2)
-
-        print(opo_json)
-
-        await quickquick.instigate_runtime_flow(ctx, opo_json, phrase)
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON: {e}")
-    except KeyError as e:
-        print(f"Key error: {e}")
 
     # retrieve local copy of address for this Discord user
-    db = SqliteDict("addr.sqlite", outer_stack=False)
-    addr = db[str(ctx.user.id)] 
-    db.close()
+    #db = SqliteDict("addr.sqlite", outer_stack=False)
+    #addr = db[str(ctx.user.id)] 
+    #db.close()
+
+    # map address to most recent or selected token id for user
+    
+    # use URI for token id owned by address
+    #tokenURI = contract_instance.functions.tokenURI(3).call()
+    tokenURI = contract_instance.functions.tokenURI(0).call()
+    print(tokenURI)
+
+    if tokenURI.startswith('http'):
+      opo_json = json.loads(requests.get(tokenURI).text)
+      print("Response: ", opo_json)
+
+      opo_json = json.dumps(opo_json)
+    else:
+      # Remove surrounding double quotes
+      if tokenURI.startswith('"') and tokenURI.endswith('"'):
+        tokenURI = tokenURI[1:-1]
+
+        try:
+            # Parse the JSON string
+            data = json.loads(tokenURI)
+
+            # Extract the opo field
+            opo_field = data['opo']
+
+            # Convert the opo field back to a JSON string
+            opo_json = json.dumps(opo_field[0], indent=2)
+
+        except json.JSONDecodeError as e:
+          print(f"Error decoding JSON: {e}")
+        except KeyError as e:
+          print(f"Key error: {e}")
+
+    print(opo_json)
+
+    await quickquick.instigate_runtime_flow(ctx, opo_json, phrase)
+    
 
     await ctx.channel.send(
       "Locker added! Make your Opo agent and use with /opo"
     )
     
     await ctx.followup.send(
-        f"addr : {addr}"
+        f"tokenURI : {tokenURI}"
     )
     
   #f"Initiating your opo agents with \n**\nUser-Specified Input\n**\n{phrase}"
