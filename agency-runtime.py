@@ -144,11 +144,6 @@ async def nifty_box(ctx, phrase: str):
 
     await quickquick.instigate_runtime_flow(ctx, opo_json, phrase)
     
-
-    await ctx.channel.send(
-      "Locker added! Make your Opo agent and use with /opo"
-    )
-    
     await ctx.followup.send(
         f"tokenURI : {tokenURI}"
     )
