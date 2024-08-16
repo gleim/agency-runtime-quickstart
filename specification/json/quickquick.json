@@ -23,7 +23,7 @@
       "to": "Guidance Assessment"
     }
   ],
-  "conditional-edges": [
+  "conditional_edges": [
     {
       "from": "Guidance Assessment",
       "conditional": "should_end",
@@ -31,7 +31,7 @@
       "false": "Task Inception"
     }
   ],
-  "halt-set": [
+  "halt_set": [
       "DELIVERED"
   ]
 }
