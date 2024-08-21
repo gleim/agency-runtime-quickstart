@@ -28,23 +28,23 @@ async def on_ready():
   print(client.user)
 
 
-@tree.command(name="opo_locker",
-              description="create your Opo locker",
+@tree.command(name="create_opo",
+              description="create your Opo",
               guild=discord.Object(id=guild_id))
 async def locker_box(ctx):
   # restrict messaging by channel
-  if ctx.channel.name == 'opo-agents':
-    await ctx.channel.reply(
-        f"Create own-your-own portable agents at http://opo-creator.replit.app/{ctx.author.id}"
+  if ctx.channel.name == 'mint-opo':
+    await ctx.followup.send(
+        "Create Opo agent at https://opo-creator.replit.app/"
     )
 
 
-@tree.command(name="opo_connect",
-              description="connect your Opo locker",
+@tree.command(name="connect_opo",
+              description="connect Opo",
               guild=discord.Object(id=guild_id))
 async def connect_box(ctx, addr: str):
   # restrict messaging by channel
-  if ctx.channel.name == 'mint-opo-agents':
+  if ctx.channel.name == 'mint-opo':
     await ctx.response.defer(ephemeral=True)
     db = SqliteDict("addr.sqlite", outer_stack=False)
     db[str(ctx.user.id)] = {"addr": addr}
@@ -52,7 +52,7 @@ async def connect_box(ctx, addr: str):
     db.close()
 
     await ctx.channel.send(
-      "Locker added! Make your Opo agent and use with /opo"
+      "Opo connected! Use with /opo"
     )
     await ctx.followup.send(f"User: {ctx.user.id}, Adding locker address {addr}")
 
@@ -88,12 +88,12 @@ async def json_box(ctx, phrase: str, team_json: str):
 
 
 @tree.command(
-    name="opo",
+    name="hello_opo",
     description="add a quick phrase, your Opo agents provide nifty responses",
     guild=discord.Object(id=guild_id))
 async def nifty_box(ctx, phrase: str):
   # restrict messaging by channel
-  if ctx.channel.name == 'mint-opo-agents':
+  if ctx.channel.name == 'mint-opo':
     await ctx.response.defer(ephemeral=True)
     
     # extract opo agent from JSON, call instigate_runtime_flow
@@ -104,12 +104,16 @@ async def nifty_box(ctx, phrase: str):
     contract_instance = w3.eth.contract(address=agent_factory, abi=abi)
 
     # retrieve local copy of address for this Discord user
-    #db = SqliteDict("addr.sqlite", outer_stack=False)
-    #addr = db[str(ctx.user.id)] 
-    #db.close()
+    db = SqliteDict("addr.sqlite", outer_stack=False)
+    addr_dict = db[str(ctx.user.id)] 
+    db.close()
 
-    # map address to most recent or selected token id for user
+    print(f"addr: {addr_dict['addr']}")
+    #print(f"cksum addr: {Web3.to_checksum_address(addr[addr])}")
     
+    # map address to most recent or selected token id for user
+    balanceOf = contract_instance.functions.balanceOf(addr_dict['addr']).call()
+    print(f"balance: {balanceOf}")
     # use URI for token id owned by address
     #tokenURI = contract_instance.functions.tokenURI(3).call()
     tokenURI = contract_instance.functions.tokenURI(0).call()
