@@ -35,7 +35,7 @@ async def locker_box(ctx):
   # restrict messaging by channel
   if ctx.channel.name == 'mint-opo':
     await ctx.followup.send(
-        "Create Opo agent at https://opo-creator.replit.app/"
+        "Create Opo agent at https://opopop.ai/"
     )
 
 
@@ -97,9 +97,15 @@ async def nifty_box(ctx, phrase: str):
     await ctx.response.defer(ephemeral=True)
     
     # extract opo agent from JSON, call instigate_runtime_flow
-    w3_provider= Web3.HTTPProvider(f"https://sepolia.infura.io/v3/{infura_project_id}")
-    agent_factory = '0x5FBB68B52B8017c5A56a5985d87Cb32cb5cb6538'
-    abi = Path('./contract/AgentFactory/abi.json').read_text()
+    w3_provider = Web3.HTTPProvider(f"https://sepolia.infura.io/v3/{infura_project_id}")
+    # AgencyInstance on Sepolia
+    #agent_factory = '0x5FBB68B52B8017c5A56a5985d87Cb32cb5cb6538'
+    #abi = Path('./contract/AgentFactory/abi.json').read_text()
+    
+    # OpoFactory on Sepolia
+    agent_factory = '0xD800E7dEd2778d48B6653284d27Aa7ede7E962CE'
+    abi = Path('./contract/OpoFactory/abi.json').read_text()
+    
     w3 = Web3(w3_provider)   
     contract_instance = w3.eth.contract(address=agent_factory, abi=abi)
 
@@ -108,16 +114,24 @@ async def nifty_box(ctx, phrase: str):
     addr_dict = db[str(ctx.user.id)] 
     db.close()
 
-    print(f"addr: {addr_dict['addr']}")
-    #print(f"cksum addr: {Web3.to_checksum_address(addr[addr])}")
+    user_address = Web3.to_checksum_address(addr_dict['addr'])
+    print(f"User address: {user_address}")
     
-    # map address to most recent or selected token id for user
-    balanceOf = contract_instance.functions.balanceOf(addr_dict['addr']).call()
-    print(f"balance: {balanceOf}")
-    # use URI for token id owned by address
-    #tokenURI = contract_instance.functions.tokenURI(3).call()
-    tokenURI = contract_instance.functions.tokenURI(0).call()
-    print(tokenURI)
+    # Get the balance (number of tokens owned by the address)
+    balance = contract_instance.functions.balanceOf(user_address).call()
+    print(f"Token balance: {balance}")
+
+    if balance > 0:
+        # Get the token ID of the first token owned by the address
+        token_id = contract_instance.functions.tokenOfOwnerByIndex(user_address, 0).call()
+        print(f"Token ID: {token_id}")
+
+        # Retrieve the URI for the owned token
+        tokenURI = contract_instance.functions.tokenURI(token_id).call()
+        print(f"Token URI: {tokenURI}")
+    else:
+        print("User doesn't own any tokens")
+        tokenURI = None
 
     if tokenURI.startswith('http'):
       opo_json = json.loads(requests.get(tokenURI).text)
@@ -147,10 +161,6 @@ async def nifty_box(ctx, phrase: str):
     print(opo_json)
 
     await quickquick.instigate_runtime_flow(ctx, opo_json, phrase)
-    
-    await ctx.followup.send(
-        f"tokenURI : {tokenURI}"
-    )
     
   #f"Initiating your opo agents with \n**\nUser-Specified Input\n**\n{phrase}"
   #await quickquick.instigate_agent_flow(ctx, phrase)
